@@ -61,8 +61,11 @@ module Lemans
     Usage = Data.define(
       :input_tokens, :output_tokens,
       :cached_tokens, :steps,
-      :cost_usd, :cost_source
+      :cost_usd, :cost_source,
+      :accounting
     ) do
+      def initialize(accounting: nil, **rest) = super(accounting:, **rest)
+
       def as_json(**) = to_h.merge(cost_source: cost_source&.to_h).compact
 
       # A multistep trial's totals; an unknown step cost makes the sum unknown.
@@ -73,8 +76,24 @@ module Lemans
           cached_tokens: cached_tokens + other.cached_tokens,
           steps: steps + other.steps,
           cost_usd: cost_usd && other.cost_usd && cost_usd + other.cost_usd,
-          cost_source: other.cost_source || cost_source
+          cost_source: other.cost_source || cost_source,
+          accounting: self.class.merge_accounting(accounting, other.accounting)
         )
+      end
+
+      # A nil side is an unreported account. Summing it with a reported one
+      # would hide the gap, so the total stays unknown.
+      def self.merge_accounting(left, right)
+        return if left.nil? || right.nil?
+
+        (left.keys | right.keys).to_h { |key| [ key, merge_account_value(left[key], right[key], key) ] }
+      end
+
+      def self.merge_account_value(left, right, key)
+        return if left.nil? || right.nil?
+        return Miniswen::LocalRoute.merge_phases(left, right) if key.to_s == "phases"
+
+        left + right
       end
     end
 
@@ -93,7 +112,8 @@ module Lemans
         cached_tokens: data[:cached_tokens],
         steps: data[:steps],
         cost_usd: data[:cost_usd],
-        cost_source:
+        cost_source:,
+        accounting: data[:accounting]
       )
     end
 

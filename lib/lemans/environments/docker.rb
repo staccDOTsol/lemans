@@ -44,7 +44,7 @@ module Lemans
         started = now
         argv = [ "exec", "--user", "0" ]
         env = proxy_env.merge(env) if network.allowlist?
-        env.each { |key, value| argv += [ "--env", "#{key}=#{value}" ] }
+        env.each { |key, value| argv += [ "--env", "#{key}=#{value}" ] unless value.nil? }
         # The in-container timeout is what actually kills the process
         argv += [ container, "timeout", timeout.to_i.to_s, "bash", "-c", command ]
 

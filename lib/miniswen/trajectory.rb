@@ -75,7 +75,7 @@ module Miniswen
       if (metrics = message[:metrics])
         step[:model_name] = model
         step[:metrics] = metrics_for(metrics)
-        step[:llm_call_count] = 1
+        step[:llm_call_count] = metrics[:model_requests] || metrics[:requests] || 1
       end
       # ATIF has no field for how a turn ended
       extra = { finish_reason: message[:finish_reason], provider: message[:provider] }.compact
@@ -87,13 +87,19 @@ module Miniswen
       calls.map { { tool_call_id: it[:id], function_name: it[:name], arguments: it[:arguments] } }
     end
 
+    LOCAL_EXTRA = %i[requests model_requests generated_tokens duration phases endpoint].freeze
+
     def metrics_for(metrics)
-      thinking = metrics[:thinking_tokens].to_i
+      thinking = metrics[:thinking_tokens]
       cached = metrics[:cached_tokens].to_i
-      named = metrics.except(:thinking_tokens).compact
+      named = metrics.except(:thinking_tokens, *LOCAL_EXTRA).compact
       extra = {}
-      extra[:completion_tokens_details] = { reasoning_tokens: thinking } if thinking.positive?
+      extra[:completion_tokens_details] = { reasoning_tokens: thinking } if thinking&.positive?
       extra[:prompt_tokens_details] = { cached_tokens: cached } if cached.positive?
+      LOCAL_EXTRA.each do |key|
+        value = metrics[key]
+        extra[key] = value unless value.nil?
+      end
       extra.empty? ? named : named.merge(extra: extra)
     end
 
@@ -105,9 +111,25 @@ module Miniswen
         total_cost_usd: result.cost_usd,
         total_steps: result.steps
       }.compact
-      return totals unless result.thinking_tokens.positive?
+      extra = final_extra
+      extra.empty? ? totals : totals.merge(extra: extra)
+    end
 
-      totals.merge(extra: { total_reasoning_tokens: result.thinking_tokens })
+    def final_extra
+      extra = {}
+      if result.requests
+        extra[:total_reasoning_tokens] = result.thinking_tokens unless result.thinking_tokens.nil?
+      elsif result.thinking_tokens&.positive?
+        extra[:total_reasoning_tokens] = result.thinking_tokens
+      end
+      extra[:requests] = result.requests if result.requests
+      extra[:model_requests] = result.model_requests unless result.model_requests.nil?
+      extra[:generated_tokens] = result.generated_tokens unless result.generated_tokens.nil?
+      if result.model_duration&.positive? || result.requests&.positive?
+        extra[:model_duration] = result.model_duration
+      end
+      extra[:phases] = result.phases if result.phases
+      extra
     end
   end
 end

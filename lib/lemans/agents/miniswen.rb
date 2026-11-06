@@ -39,6 +39,8 @@ module Lemans
           trajectory:,
           raw_result:
         )
+      rescue ::Miniswen::LocalRoute::Mismatch => e
+        raise ConfigError, e.message
       end
 
       private
@@ -66,7 +68,9 @@ module Lemans
           max_time: profile.timeout,
           max_cost: profile.cost_limit,
           exec_timeout: profile.exec_timeout,
-          max_output_tokens: profile.max_output_tokens
+          max_output_tokens: profile.max_output_tokens,
+          checkpoint: profile.local_checkpoint,
+          local_model_ids: profile.models
         )
       end
 
@@ -99,8 +103,22 @@ module Lemans
           **totals,
           cost_usd: result.cost_usd,
           # FIXME: need a better way to map Miniswen's cost source to Lemans'
-          cost_source: Result::CostSource.build(**result.cost_source.to_h)
+          cost_source: Result::CostSource.build(**result.cost_source.to_h),
+          accounting: accounting_for(result)
         )
+      end
+
+      def accounting_for(result)
+        return if result.requests.nil?
+
+        {
+          "reasoning_tokens" => result.thinking_tokens,
+          "requests" => result.requests,
+          "model_requests" => result.model_requests,
+          "generated_tokens" => result.generated_tokens,
+          "model_duration" => result.model_duration,
+          "phases" => result.phases
+        }
       end
 
       def trajectory_for(result)

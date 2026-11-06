@@ -44,6 +44,22 @@ class ConfigAgentTest < Minitest::Test
     assert_nil agent.environment.network.hosts
   end
 
+  def test_local_checkpoint
+    agent = Lemans::Config::Agent.from_config(full_config.merge(
+      "local" => { "checkpoint" => { "sha256" => "ab" * 32, "bytes" => 103_425_694_816 } }
+    ))
+
+    assert_equal "ab" * 32, agent.local_checkpoint[:sha256]
+    assert_equal 103_425_694_816, agent.local_checkpoint[:bytes]
+    assert_equal 103_425_694_816, agent.to_h.dig("local", "checkpoint", "bytes")
+
+    error = assert_raises(Lemans::ConfigError) do
+      Lemans::Config::Agent.from_config(full_config.merge("local" => { "checkpoint" => { "sha256" => "nope" } }))
+    end
+
+    assert_equal "local checkpoint sha256 \"nope\" is not 64 hex characters", error.message
+  end
+
   def test_missing_model
     error = assert_raises(Lemans::ConfigError) do
       Lemans::Config::Agent.from_config(full_config.except("model"))

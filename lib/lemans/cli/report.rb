@@ -25,6 +25,12 @@ module Lemans
               unreadable: store.unreadable.size, **)
         end
 
+        def token_total(usage)
+          return if usage.input_tokens.nil? || usage.output_tokens.nil?
+
+          usage.input_tokens + usage.output_tokens
+        end
+
         def row_from(result)
           usage = result.usage
           {
@@ -42,8 +48,9 @@ module Lemans
             cost_usd: usage&.cost_usd,
             steps: usage&.steps,
             # Tokens the model actually consumed and produced; cache reads stay
-            # out, matching how providers meter a run.
-            tokens: usage && (usage.input_tokens.to_i + usage.output_tokens.to_i),
+            # out, matching how providers meter a run. An unreported count stays
+            # blank — it is not a zero.
+            tokens: usage && token_total(usage),
             duration: result.duration,
             started_at: result.started_at&.iso8601,
             trial: result.id,
