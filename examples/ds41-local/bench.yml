@@ -1,0 +1,37 @@
+# Same-checkpoint DS4.1 smoke bench. The model weights are not in this repo.
+# `lemans run --agent oracle` and `--agent nop` prove the bench. They do not
+# call the router. A later `miniswen` run checks both arms before any completion.
+version: 1
+
+environment:
+  backend: docker
+  resources: { cpus: 2, memory: 2GB, storage: 5GB }
+  build_timeout: 10m
+  network:
+    mode: none
+
+agent:
+  # Harness-side loop: the sandbox never sees provider credentials.
+  # Switch to miniswen-installed only after the router host is on the allowlist
+  # below; the sandbox then receives the dummy key and the base URL, nothing else.
+  name: miniswen
+  model:
+    - local/direct
+    - local/lecore
+  timeout: 30m
+  step_limit: 100
+  local:
+    checkpoint:
+      sha256: e8289c0026d746197d5f9b865b0b87c4a16dc94430d9cfed4a11074bf05ea36e
+      bytes: 103425694816
+    # Textual DSML from the local router becomes bash tool calls. The limit
+    # keeps the first command in a response; later valid calls are counted, not run.
+    dsml: true
+    bash_call_limit: 1
+  environment:
+    network:
+      mode: none
+      # hosts: ["192.168.1.10"]  # exact host of LEMANS_LOCAL_API_BASE, for miniswen-installed
+
+verifier:
+  timeout: 10m

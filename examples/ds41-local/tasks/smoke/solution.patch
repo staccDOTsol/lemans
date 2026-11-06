@@ -1,0 +1,7 @@
+diff --git a/smoke.txt b/smoke.txt
+new file mode 100644
+index 0000000..8a6f9c4
+--- /dev/null
++++ b/smoke.txt
+@@ -0,0 +1 @@
++ok

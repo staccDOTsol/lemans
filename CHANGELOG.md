@@ -1,5 +1,8 @@
 ## [Unreleased]
 
+- Miniswen: `local/<model>` talks to an OpenAI-compatible router at `LEMANS_LOCAL_API_BASE` (no default host). Both configured arms must show the same checkpoint on `GET /v1/models`, and a trial records every prompt, completion, and reasoning token plus request counts, model-call wall time, generated tokens, reported cost, and optional `lemans` / `lecore` phase annotations. Missing figures stay unknown.
+- Miniswen: `agent.local.dsml` parses local textual DSML and degraded `<invoke>` tool calls into the bash tool only. `bash_call_limit` keeps the first calls and records how many valid calls were not run. Distinct commands are not merged, and the generation token count is unchanged.
+
 ## [1.6.0] - 2026-11-03
 
 - Miniswen: upgrade ruby_llm to 2.1.1 (use its new built-in caching, finish reasons and reasoning replay, keep the ~10 min retry window, honor `RUBYLLM_DEBUG`, allow JSON 3).

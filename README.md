@@ -188,6 +188,8 @@ export LEMANS_PROVIDER_ORDER="chutes"  # [optional] Pin an OpenRouter model to p
 export LEMANS_PROVIDER_ORDER="z-ai,chutes"  # ...or try them in order
 ```
 
+A same-checkpoint run against a router on your own machine uses the `local` provider instead of a hosted model. There is no default URL. See [examples/ds41-local](examples/ds41-local/README.md).
+
 ### 4. Prove the bench before benchmarking anything
 
 ```bash

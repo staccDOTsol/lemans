@@ -74,6 +74,25 @@ class ResultTest < Minitest::Test
     assert_equal source, unknown.cost_source
   end
 
+  def test_usage_accounting
+    left = Lemans::Result::Usage.new(input_tokens: 1, output_tokens: 1, cached_tokens: 0, steps: 1, cost_usd: 0,
+                                    cost_source: nil, accounting: { "requests" => 1, "reasoning_tokens" => nil,
+                                                                    "phases" => [ { name: "weighted", duration: 0.029 } ] })
+    right = Lemans::Result::Usage.new(input_tokens: 1, output_tokens: 1, cached_tokens: 0, steps: 1, cost_usd: 0,
+                                     cost_source: nil, accounting: { "requests" => 2, "reasoning_tokens" => 4,
+                                                                     "phases" => [ { "name" => "weighted", "duration" => 0.001, "tokens" => 3 } ] })
+    summed = left + right
+
+    assert_equal 3, summed.accounting["requests"]
+    assert_nil summed.accounting["reasoning_tokens"]
+    assert_in_delta 0.03, summed.accounting["phases"].first[:duration]
+    assert_nil summed.accounting["phases"].first[:tokens]
+
+    gap = summed + Lemans::Result::Usage.zero
+
+    assert_nil gap.accounting
+  end
+
   def test_step_completed
     result = build_result
     usage = Lemans::Result::Usage.new(input_tokens: 10, output_tokens: 5, cached_tokens: 0, steps: 2,

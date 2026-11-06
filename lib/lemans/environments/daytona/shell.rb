@@ -24,6 +24,7 @@ module Lemans
         end
 
         def exec(command, timeout: nil, env: {})
+          env = env.compact
           validate_env!(env)
           started = now
           response =

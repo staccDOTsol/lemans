@@ -17,7 +17,7 @@ module Miniswen
 
       def exec(command, timeout: nil, env: nil)
         argv = [ "docker", "exec" ]
-        env&.each { |key, value| argv += [ "--env", "#{key}=#{value}" ] }
+        env&.each { |key, value| argv += [ "--env", "#{key}=#{value}" ] unless value.nil? }
         argv << id
         argv += [ "timeout", timeout.ceil.to_s ] if timeout&.positive?
         argv += [ "bash", "-c", command ]
