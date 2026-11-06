@@ -70,7 +70,9 @@ module Lemans
           exec_timeout: profile.exec_timeout,
           max_output_tokens: profile.max_output_tokens,
           checkpoint: profile.local_checkpoint,
-          local_model_ids: profile.models
+          local_model_ids: profile.models,
+          dsml: profile.local_dsml,
+          bash_call_limit: profile.local_bash_call_limit
         )
       end
 
@@ -140,7 +142,9 @@ module Lemans
           wall_time_limit_seconds: profile.timeout,
           exec_timeout_seconds: profile.exec_timeout,
           max_output_tokens: profile.max_output_tokens,
-          max_consecutive_format_errors: ::Miniswen::Agent::MAX_CONSECUTIVE_FORMAT_ERRORS
+          max_consecutive_format_errors: ::Miniswen::Agent::MAX_CONSECUTIVE_FORMAT_ERRORS,
+          dsml: (true if profile.local_dsml),
+          bash_call_limit: profile.local_bash_call_limit
         }.compact }
       end
     end

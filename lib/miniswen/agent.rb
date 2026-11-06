@@ -222,7 +222,8 @@ module Miniswen
     def initialize(model:, environment:, workdir: nil, max_steps: 0, max_time: 0, max_cost: nil,
                    exec_timeout: 30, max_output_tokens: 0,
                    clock: -> { Process.clock_gettime(Process::CLOCK_MONOTONIC) },
-                   reporter: nil, checkpoint: nil, local_model_ids: nil, model_list: nil)
+                   reporter: nil, checkpoint: nil, local_model_ids: nil, model_list: nil,
+                   dsml: false, bash_call_limit: nil)
       name, @effort = model.split("#", 2)
       @provider, @id = name.split("/", 2)
       unless @id
@@ -247,6 +248,8 @@ module Miniswen
       @checkpoint = checkpoint
       @local_model_ids = local_model_ids
       @model_list = model_list
+      @dsml = dsml
+      @bash_call_limit = bash_call_limit
     end
 
     # With a `history` (the Result of an interrupted run), the session goes on
@@ -479,7 +482,8 @@ module Miniswen
         generated_tokens: response[:generated_tokens],
         duration: response[:duration],
         phases: response[:phases],
-        endpoint: response[:endpoint]
+        endpoint: response[:endpoint],
+        dsml: response[:dsml]
       )
     end
 
@@ -662,6 +666,7 @@ module Miniswen
         provider: response.raw&.body&.dig("provider")
       }
       apply_local_account(body, response)
+      apply_dsml_protocol(body)
       body
     end
 
@@ -854,6 +859,15 @@ module Miniswen
       name = "#{@provider || info&.provider}/#{@id}"
       host = local_endpoint if @provider == "local"
       host ? "#{name} @ #{host}" : name
+    end
+
+    def apply_dsml_protocol(body)
+      return unless @provider == "local" && @dsml
+
+      parsed = LocalRoute::Dsml.apply(content: body[:content], tool_calls: body[:tool_calls], limit: @bash_call_limit)
+      body[:content] = parsed[:content]
+      body[:tool_calls] = parsed[:calls]
+      body[:dsml] = { raw: parsed[:raw], omitted: parsed[:omitted], errors: parsed[:errors], parse_path: parsed[:parse_path] }
     end
 
     def metric_count(value)

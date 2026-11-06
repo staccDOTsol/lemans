@@ -90,6 +90,14 @@ The wrapper may add a `lemans` object (or `lecore` when `lemans` is absent) when
 
 Those figures land on the trial usage `accounting` object and on the trajectory (`metrics.extra`, `final_metrics.extra`, and `llm_call_count` when the server reported more than one call).
 
+## Textual DSML tool calls
+
+The local V15 completion is often not an OpenAI `tool_calls` array. It is text, either official `｜DSML｜` blocks or a degraded `<invoke>` (sometimes wrapped in `<bash>`). With `agent.local.dsml: true`, miniswen reads that text into the bash tool it already sent. The only accepted shape is `bash` with a string `command` (`string="true"`). Any other tool, parameter, or flag is dropped and recorded. Arguments are not filled in.
+
+`bash_call_limit: 1` keeps the first exact command in that response and records the number of later valid calls under `metrics.extra.dsml.omitted`. Different commands are not merged. The raw text is kept on that same record. Prompt and completion totals stay the full generation, including tokens spent on calls that were not run. The parser does not call the model again and does not execute anything by itself.
+
+The smoke bench turns this on. Time, step, and cost budgets are unchanged.
+
 ## Smoke, then the corpus
 
 The only task here is `smoke`. Its grader is `verification_test.rb`, not the instruction. Oracle should score 1 and nop should score 0. Neither talks to the router.

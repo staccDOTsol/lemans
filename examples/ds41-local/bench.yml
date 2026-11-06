@@ -24,6 +24,10 @@ agent:
     checkpoint:
       sha256: e8289c0026d746197d5f9b865b0b87c4a16dc94430d9cfed4a11074bf05ea36e
       bytes: 103425694816
+    # Textual DSML from the local router becomes bash tool calls. The limit
+    # keeps the first command in a response; later valid calls are counted, not run.
+    dsml: true
+    bash_call_limit: 1
   environment:
     network:
       mode: none

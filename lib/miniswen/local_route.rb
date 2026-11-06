@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "local_route/dsml"
 require "ipaddr"
 require "json"
 require "net/http"

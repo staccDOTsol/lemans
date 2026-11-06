@@ -87,7 +87,7 @@ module Miniswen
       calls.map { { tool_call_id: it[:id], function_name: it[:name], arguments: it[:arguments] } }
     end
 
-    LOCAL_EXTRA = %i[requests model_requests generated_tokens duration phases endpoint].freeze
+    LOCAL_EXTRA = %i[requests model_requests generated_tokens duration phases endpoint dsml].freeze
 
     def metrics_for(metrics)
       thinking = metrics[:thinking_tokens]
